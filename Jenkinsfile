@@ -3,7 +3,7 @@ pipeline {
 
     tools {
         // O nome que você definiu na ferramenta do Jenkins
-        nodejs "node25" 
+        nodejs "node 25.9" 
     }
 
     stages {
