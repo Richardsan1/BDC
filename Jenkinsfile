@@ -16,20 +16,33 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 // Instala dependências
-                sh 'npm install'
+                script {
+                    if (isUnix()) {
+                        sh 'npm install'
+                    } else {
+                        bat 'npm install'
+                    }
+                }
             }
         }
         stage('Test') {
             steps {
-                // Executa os testes
-                sh 'npm test'
+                // Executa os testes e gera relatório JUnit para o Jenkins
+                script {
+                    if (isUnix()) {
+                        sh 'npm run test:ci'
+                    } else {
+                        bat 'npm run test:ci'
+                    }
+                }
             }
         }
     }
     
     post {
         always {
-            // Opcional: Publicar relatórios de teste
+            // Publica os resultados dos testes no Jenkins
+            junit allowEmptyResults: true, testResults: 'junit.xml'
             echo 'Testes Finalizados.'
         }
     }
