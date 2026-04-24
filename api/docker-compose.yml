@@ -1,0 +1,353 @@
+version: '3.9'
+
+services:
+
+  # ─── Infraestrutura Compartilhada ──────────────────────────────────────────
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: beleza_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"   # painel: http://localhost:15672 (guest/guest)
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - beleza_network
+
+  # ─── Bancos de Dados (um por serviço) ──────────────────────────────────────
+
+  auth_db:
+    image: postgres:16-alpine
+    container_name: beleza_auth_db
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - auth_db_data:/var/lib/postgresql/data
+      - ./authservice/database/postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - beleza_network
+
+  user_db:
+    image: postgres:16-alpine
+    container_name: beleza_user_db
+    environment:
+      POSTGRES_DB: user_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - user_db_data:/var/lib/postgresql/data
+      - ./userservice/database/postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - beleza_network
+
+  search_db:
+    image: postgres:16-alpine
+    container_name: beleza_search_db
+    environment:
+      POSTGRES_DB: search_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - search_db_data:/var/lib/postgresql/data
+      - ./searchservice/database/postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - beleza_network
+
+  booking_db:
+    image: postgres:16-alpine
+    container_name: beleza_booking_db
+    environment:
+      POSTGRES_DB: booking_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - booking_db_data:/var/lib/postgresql/data
+      - ./bookingservice/database/postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - beleza_network
+
+  payment_db:
+    image: postgres:16-alpine
+    container_name: beleza_payment_db
+    environment:
+      POSTGRES_DB: payment_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - payment_db_data:/var/lib/postgresql/data
+      - ./paymentservice/database/postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - beleza_network
+
+  notification_db:
+    image: postgres:16-alpine
+    container_name: beleza_notification_db
+    environment:
+      POSTGRES_DB: notification_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - notification_db_data:/var/lib/postgresql/data
+      - ./notificationservice/database/postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - beleza_network
+
+  admin_db:
+    image: postgres:16-alpine
+    container_name: beleza_admin_db
+    environment:
+      POSTGRES_DB: admin_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - admin_db_data:/var/lib/postgresql/data
+      - ./adminservice/database/postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - beleza_network
+
+  # ─── Microsserviços ─────────────────────────────────────────────────────────
+
+  auth-service:
+    build: ./authservice
+    container_name: beleza_auth_service
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3001
+      DB_HOST: auth_db
+      DB_PORT: 5432
+      DB_NAME: auth_db
+      DB_USER: postgres
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      BCRYPT_SALT_ROUNDS: 12
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      RABBITMQ_EXCHANGE: beleza_events
+      INTERNAL_SERVICE_KEY: ${INTERNAL_SERVICE_KEY}
+    depends_on:
+      auth_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - beleza_network
+    restart: unless-stopped
+
+  user-service:
+    build: ./userservice
+    container_name: beleza_user_service
+    ports:
+      - "3002:3002"
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3002
+      DB_HOST: user_db
+      DB_PORT: 5432
+      DB_NAME: user_db
+      DB_USER: postgres
+      DB_PASSWORD: ${DB_PASSWORD}
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      RABBITMQ_EXCHANGE: beleza_events
+      INTERNAL_SERVICE_KEY: ${INTERNAL_SERVICE_KEY}
+      AUTH_SERVICE_URL: http://auth-service:3001
+    depends_on:
+      user_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - beleza_network
+    restart: unless-stopped
+
+  search-service:
+    build: ./searchservice
+    container_name: beleza_search_service
+    ports:
+      - "3003:3003"
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3003
+      DB_HOST: search_db
+      DB_PORT: 5432
+      DB_NAME: search_db
+      DB_USER: postgres
+      DB_PASSWORD: ${DB_PASSWORD}
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      RABBITMQ_EXCHANGE: beleza_events
+      INTERNAL_SERVICE_KEY: ${INTERNAL_SERVICE_KEY}
+      USER_SERVICE_URL: http://user-service:3002
+    depends_on:
+      search_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - beleza_network
+    restart: unless-stopped
+
+  booking-service:
+    build: ./bookingservice
+    container_name: beleza_booking_service
+    ports:
+      - "3004:3004"
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3004
+      DB_HOST: booking_db
+      DB_PORT: 5432
+      DB_NAME: booking_db
+      DB_USER: postgres
+      DB_PASSWORD: ${DB_PASSWORD}
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      RABBITMQ_EXCHANGE: beleza_events
+      INTERNAL_SERVICE_KEY: ${INTERNAL_SERVICE_KEY}
+      USER_SERVICE_URL: http://user-service:3002
+      PAYMENT_SERVICE_URL: http://payment-service:3005
+    depends_on:
+      booking_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - beleza_network
+    restart: unless-stopped
+
+  payment-service:
+    build: ./paymentservice
+    container_name: beleza_payment_service
+    ports:
+      - "3005:3005"
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3005
+      DB_HOST: payment_db
+      DB_PORT: 5432
+      DB_NAME: payment_db
+      DB_USER: postgres
+      DB_PASSWORD: ${DB_PASSWORD}
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      RABBITMQ_EXCHANGE: beleza_events
+      INTERNAL_SERVICE_KEY: ${INTERNAL_SERVICE_KEY}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN}
+    depends_on:
+      payment_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - beleza_network
+    restart: unless-stopped
+
+  notification-service:
+    build: ./notificationservice
+    container_name: beleza_notification_service
+    ports:
+      - "3006:3006"
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3006
+      DB_HOST: notification_db
+      DB_PORT: 5432
+      DB_NAME: notification_db
+      DB_USER: postgres
+      DB_PASSWORD: ${DB_PASSWORD}
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      RABBITMQ_EXCHANGE: beleza_events
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      EMAIL_FROM: ${EMAIL_FROM}
+    depends_on:
+      notification_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - beleza_network
+    restart: unless-stopped
+
+  admin-service:
+    build: ./adminservice
+    container_name: beleza_admin_service
+    ports:
+      - "3007:3007"
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3007
+      DB_HOST: admin_db
+      DB_PORT: 5432
+      DB_NAME: admin_db
+      DB_USER: postgres
+      DB_PASSWORD: ${DB_PASSWORD}
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      RABBITMQ_EXCHANGE: beleza_events
+      INTERNAL_SERVICE_KEY: ${INTERNAL_SERVICE_KEY}
+      USER_SERVICE_URL: http://user-service:3002
+      AUTH_SERVICE_URL: http://auth-service:3001
+    depends_on:
+      admin_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - beleza_network
+    restart: unless-stopped
+
+# ─── Rede interna ─────────────────────────────────────────────────────────────
+networks:
+  beleza_network:
+    driver: bridge
+
+# ─── Volumes persistentes ──────────────────────────────────────────────────────
+volumes:
+  auth_db_data:
+  user_db_data:
+  search_db_data:
+  booking_db_data:
+  payment_db_data:
+  notification_db_data:
+  admin_db_data:
