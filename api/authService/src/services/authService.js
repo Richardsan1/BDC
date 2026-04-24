@@ -3,7 +3,7 @@ const { query } = require('../config/database');
 const { gerarToken } = require('../utils/jwt');
 const { publish } = require('../config/messageBroker');
 
-const SALT_ROUNDS = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 12;
+const SALT_ROUNDS = parseInt(process.env.BCRYPT_SALT_ROUNDS);
 
 /**
  * UC01 / UC12 — Registra um novo usuário (cliente, profissional, salão).

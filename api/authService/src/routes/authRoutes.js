@@ -8,8 +8,8 @@ const { regrasRegistro, regrasLogin, validar } = require('../middleware/validaca
 
 // Rate limiter específico para rotas de autenticação (proteção contra brute force)
 const authLimiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 min
-  max: parseInt(process.env.RATE_LIMIT_AUTH_MAX) || 10,
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS), // 15 min
+  max: parseInt(process.env.RATE_LIMIT_AUTH_MAX),
   standardHeaders: true,
   legacyHeaders: false,
   message: { erro: 'Muitas tentativas. Aguarde antes de tentar novamente.' },

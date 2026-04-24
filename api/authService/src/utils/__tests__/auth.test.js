@@ -1,10 +1,10 @@
 const request = require('supertest');
-const app = require('../src/app');
-const { query, pool } = require('../src/config/database');
+const app = require('../../app');
+const { query, pool } = require('../../config/database');
 
 // Mock do banco e broker para testes isolados
-jest.mock('../src/config/database');
-jest.mock('../src/config/messageBroker', () => ({ publish: jest.fn() }));
+jest.mock('../../config/database');
+jest.mock('../../config/messageBroker', () => ({ publish: jest.fn() }));
 
 const mockUsuarioCliente = {
   id: 'uuid-123',

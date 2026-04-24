@@ -3,11 +3,11 @@ const amqplib = require('amqplib');
 let connection = null;
 let channel = null;
 
-const EXCHANGE = process.env.RABBITMQ_EXCHANGE || 'beleza_events';
+const EXCHANGE = process.env.RABBITMQ_EXCHANGE;
 
 const connect = async () => {
   try {
-    connection = await amqplib.connect(process.env.RABBITMQ_URL || 'amqp://localhost:5672');
+    connection = await amqplib.connect(process.env.RABBITMQ_URL);
     channel = await connection.createChannel();
     await channel.assertExchange(EXCHANGE, 'topic', { durable: true });
     console.log('[MQ] Conectado ao RabbitMQ');
