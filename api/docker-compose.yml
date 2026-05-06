@@ -337,6 +337,33 @@ services:
       - beleza_network
     restart: unless-stopped
 
+  api-gateway:
+    build: ./apiGateway
+    container_name: beleza_api_gateway
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3000
+      JWT_SECRET: ${JWT_SECRET}
+      INTERNAL_SERVICE_KEY: ${INTERNAL_SERVICE_KEY}
+      AUTH_SERVICE_URL: http://auth-service:3001
+      USER_SERVICE_URL: http://user-service:3002
+      SEARCH_SERVICE_URL: http://search-service:3003
+      BOOKING_SERVICE_URL: http://booking-service:3004
+      PAYMENT_SERVICE_URL: http://payment-service:3005
+      ADMIN_SERVICE_URL: http://admin-service:3007
+    depends_on:
+      - auth-service
+      - user-service
+      - search-service
+      - booking-service
+      - payment-service
+      - admin-service
+    networks:
+      - beleza_network
+    restart: unless-stopped
+
 # ─── Rede interna ─────────────────────────────────────────────────────────────
 networks:
   beleza_network:

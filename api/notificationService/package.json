@@ -1,0 +1,1 @@
+{ "name": "notificationservice", "version": "1.0.0", "main": "src/server.js", "scripts": { "start": "node src/server.js", "dev": "nodemon src/server.js" }, "dependencies": { "amqplib": "^0.10.4", "dotenv": "^16.4.5" }, "devDependencies": { "nodemon": "^3.1.4" } }

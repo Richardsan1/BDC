@@ -1,0 +1,16 @@
+const express = require('express');
+const helmet = require('helmet');
+const cors = require('cors');
+const morgan = require('morgan');
+const adminRoutes = require('./routes/adminRoutes');
+const { errorHandler, notFound } = require('./middleware/errorHandler');
+const app = express();
+app.use(helmet());
+app.use(cors({ origin: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000'], credentials: true }));
+app.use(express.json({ limit: '10kb' }));
+if (process.env.NODE_ENV !== 'test') app.use(morgan('dev'));
+app.get('/health', (req, res) => res.json({ status: 'ok', service: 'adminService' }));
+app.use('/admin', adminRoutes);
+app.use(notFound);
+app.use(errorHandler);
+module.exports = app;
