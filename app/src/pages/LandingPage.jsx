@@ -2,27 +2,23 @@ import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router';
 import ProfessionalCard from '../components/ProfessionalCard';
 import { search, users } from '../lib/api';
-import { especialidadesMock, profissionaisMock } from '../lib/mockData';
 
 export default function LandingPage() {
   const navigate = useNavigate();
   const [termo, setTermo] = useState('');
   const [cidade, setCidade] = useState('');
-  const [especialidades, setEspecialidades] = useState(especialidadesMock);
-  const [destaques, setDestaques] = useState(profissionaisMock.slice(0, 4));
+  const [especialidades, setEspecialidades] = useState([]);
+  const [destaques, setDestaques] = useState([]);
 
   useEffect(() => {
-    users
-      .especialidades()
-      .then((data) => Array.isArray(data) && data.length && setEspecialidades(data))
-      .catch(() => {});
+    users.especialidades().then((data) => Array.isArray(data) && data.length && setEspecialidades(data)).catch(() => setEspecialidades([]));
     search
       .buscar({ por_pagina: 4, ordenar: 'avaliacao' })
       .then((data) => {
         const lista = Array.isArray(data) ? data : data?.resultados;
-        if (lista && lista.length) setDestaques(lista);
+        if (lista && lista.length) setDestaques(lista.slice(0, 4));
       })
-      .catch(() => {});
+      .catch(() => setDestaques([]));
   }, []);
 
   const onBuscar = (e) => {

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { bookings, payments, users } from '../lib/api';
-import { profissionaisMock } from '../lib/mockData';
 import { useAuth } from '../context/AuthContext';
 
 const PASSOS = ['Serviço', 'Data', 'Horário', 'Confirmação', 'Pagamento'];
@@ -38,9 +37,8 @@ export default function BookingPage() {
   const navigate = useNavigate();
   const { usuario } = useAuth();
 
-  const [profissional, setProfissional] = useState(
-    profissionaisMock.find((p) => String(p.id) === String(id)) || profissionaisMock[0]
-  );
+  const [profissional, setProfissional] = useState(null);
+  const [carregandoProf, setCarregandoProf] = useState(true);
   const [passo, setPasso] = useState(1);
   const [servicoSel, setServicoSel] = useState(servicoIdInicial || null);
   const [data, setData] = useState('');
@@ -50,7 +48,8 @@ export default function BookingPage() {
   const [bookingId, setBookingId] = useState(null);
 
   useEffect(() => {
-    users.perfil(id).then((d) => d && setProfissional({ ...profissional, ...d })).catch(() => {});
+    setCarregandoProf(true);
+    users.perfil(id).then((d) => d && setProfissional(d)).catch(() => setProfissional(null)).finally(() => setCarregandoProf(false));
   }, [id]);
 
   const servico = useMemo(
@@ -80,11 +79,12 @@ export default function BookingPage() {
           data,
           hora,
         });
-        setBookingId(resp.id || 'mock-booking');
+        if (!resp?.id) throw new Error('Falha ao criar agendamento');
+        setBookingId(resp.id);
         setPasso(5);
       } catch (e) {
-        setBookingId('mock-booking');
-        setPasso(5);
+        setErro(e?.message || 'Erro ao criar agendamento');
+        return;
       } finally {
         setEnviando(false);
       }
@@ -95,10 +95,12 @@ export default function BookingPage() {
       setEnviando(true);
       try {
         const intent = await payments.intent(bookingId, servico.preco);
-        await payments.confirmar(intent.paymentIntentId || 'mock-intent');
+        if (!intent?.paymentIntentId) throw new Error('Falha ao obter intenção de pagamento');
+        await payments.confirmar(intent.paymentIntentId);
         navigate('/', { replace: true });
       } catch {
-        navigate('/', { replace: true });
+        setErro('Erro ao processar pagamento');
+        return;
       } finally {
         setEnviando(false);
       }

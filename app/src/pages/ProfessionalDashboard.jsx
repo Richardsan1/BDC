@@ -2,21 +2,29 @@ import { useEffect, useState } from 'react';
 import StatsCard from '../components/StatsCard';
 import Tag from '../components/Tag';
 import { bookings, users } from '../lib/api';
-import { painelProfissionalMock } from '../lib/mockData';
 import { useAuth } from '../context/AuthContext';
 
 export default function ProfessionalDashboard() {
   const { usuario } = useAuth();
-  const [dados, setDados] = useState(painelProfissionalMock);
+  const [dados, setDados] = useState({
+    nome: usuario?.nome || '',
+    iniciais: '',
+    kpis: { agendamentos: 0, receita: 0, avaliacao: 0, novosClientes: 0 },
+    hoje: new Date().toLocaleDateString('pt-BR'),
+    agenda: [],
+    servicos: [],
+    avaliacoes: [],
+  });
 
   useEffect(() => {
-    Promise.all([bookings.listar().catch(() => null), users.meusServicos().catch(() => null)])
+    Promise.all([bookings.listar().catch(() => []), users.meusServicos().catch(() => [])])
       .then(([ags, servicos]) => {
-        const next = { ...dados };
-        if (Array.isArray(ags)) next.agenda = ags;
-        if (Array.isArray(servicos)) next.servicos = servicos;
-        if (usuario?.nome) next.nome = usuario.nome;
-        setDados(next);
+        setDados((prev) => ({
+          ...prev,
+          nome: usuario?.nome || prev.nome,
+          agenda: Array.isArray(ags) ? ags : [],
+          servicos: Array.isArray(servicos) ? servicos : [],
+        }));
       })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps

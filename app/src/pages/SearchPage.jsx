@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import ProfessionalCard from '../components/ProfessionalCard';
 import { search, users } from '../lib/api';
-import { especialidadesMock, profissionaisMock } from '../lib/mockData';
 
 const AVALIACOES_OPCOES = [3, 4, 4.5];
 
@@ -11,7 +10,7 @@ export default function SearchPage() {
 
   const [termo, setTermo] = useState(searchParams.get('termo') || '');
   const [cidade, setCidade] = useState(searchParams.get('cidade') || '');
-  const [especialidades, setEspecialidades] = useState(especialidadesMock);
+  const [especialidades, setEspecialidades] = useState([]);
   const [especialidadesSel, setEspecialidadesSel] = useState(
     (searchParams.get('especialidades') || '').split(',').filter(Boolean)
   );
@@ -20,7 +19,7 @@ export default function SearchPage() {
   );
   const [inclusivo, setInclusivo] = useState(searchParams.get('inclusivo') === 'true');
 
-  const [resultados, setResultados] = useState(profissionaisMock);
+  const [resultados, setResultados] = useState([]);
   const [carregando, setCarregando] = useState(false);
   const [ordenar, setOrdenar] = useState('relevancia');
 
@@ -28,7 +27,7 @@ export default function SearchPage() {
     users
       .especialidades()
       .then((data) => Array.isArray(data) && data.length && setEspecialidades(data))
-      .catch(() => {});
+      .catch(() => setEspecialidades([]));
   }, []);
 
   const params = useMemo(
@@ -51,23 +50,7 @@ export default function SearchPage() {
         const lista = Array.isArray(data) ? data : data?.resultados;
         if (lista) setResultados(lista);
       })
-      .catch(() => {
-        const filtrados = profissionaisMock.filter((p) => {
-          if (inclusivo && !p.inclusivo) return false;
-          if (avaliacaoMin && p.avaliacao < avaliacaoMin) return false;
-          if (termo) {
-            const t = termo.toLowerCase();
-            const match =
-              p.nome.toLowerCase().includes(t) ||
-              p.subtitulo?.toLowerCase().includes(t) ||
-              p.tags?.some((tag) => tag.toLowerCase().includes(t));
-            if (!match) return false;
-          }
-          if (cidade && !p.cidade?.toLowerCase().includes(cidade.toLowerCase())) return false;
-          return true;
-        });
-        setResultados(filtrados);
-      })
+      .catch(() => setResultados([]))
       .finally(() => setCarregando(false));
   }, [params]);
 

@@ -2,21 +2,21 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import Tag from '../components/Tag';
 import { users } from '../lib/api';
-import { profissionaisMock } from '../lib/mockData';
 
 const DIAS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'];
 
 export default function ProfessionalDetailPage() {
   const { id } = useParams();
-  const [profissional, setProfissional] = useState(() =>
-    profissionaisMock.find((p) => String(p.id) === String(id)) || profissionaisMock[0]
-  );
+  const [profissional, setProfissional] = useState(null);
+  const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
+    setCarregando(true);
     users
       .perfil(id)
-      .then((data) => data && setProfissional({ ...profissional, ...data }))
-      .catch(() => {});
+      .then((data) => data && setProfissional(data))
+      .catch(() => setProfissional(null))
+      .finally(() => setCarregando(false));
   }, [id]);
 
   const p = profissional;

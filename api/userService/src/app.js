@@ -22,12 +22,13 @@ app.use(rateLimit({
 }));
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
-const origensPermitidas = process.env.CORS_ORIGINS
-  ? process.env.CORS_ORIGINS.split(',')
-  : ['http://localhost:3000'];
-
+const CORS_ORIGINS = (process.env.CORS_ORIGINS || 'http://localhost:5173').split(',').map(s => s.trim());
 app.use(cors({
-  origin: origensPermitidas,
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (CORS_ORIGINS.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-service-key', 'x-user-id', 'x-user-email', 'x-user-tipo'],

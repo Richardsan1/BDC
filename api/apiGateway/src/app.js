@@ -9,7 +9,18 @@ const app = express();
 
 app.use(helmet());
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 1000 }));
-app.use(cors({ origin: '*', credentials: false }));
+
+// CORS: allow specific origins and support credentials (cookies/Authorization)
+const CORS_ORIGINS = (process.env.CORS_ORIGINS || 'http://localhost:5173').split(',').map(s => s.trim());
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow non-browser requests (no origin) and allowed origins
+    if (!origin) return callback(null, true);
+    if (CORS_ORIGINS.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+}));
 app.use(express.json({ limit: '10kb' }));
 if (process.env.NODE_ENV !== 'test') app.use(morgan('dev'));
 

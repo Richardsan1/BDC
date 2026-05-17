@@ -3,7 +3,6 @@ import StatsCard from '../components/StatsCard';
 import Tag from '../components/Tag';
 import Button from '../components/Button';
 import { admin } from '../lib/api';
-import { aprovacoesMock, atividadeMock, metricasMock } from '../lib/mockData';
 
 const CORES_ATIVIDADE = {
   aprovado: 'bg-mint-600',
@@ -13,9 +12,9 @@ const CORES_ATIVIDADE = {
 };
 
 export default function AdminDashboard() {
-  const [metricas, setMetricas] = useState(metricasMock);
-  const [aprovacoes, setAprovacoes] = useState(aprovacoesMock);
-  const [atividade] = useState(atividadeMock);
+  const [metricas, setMetricas] = useState({ usuariosTotais: 0, profissionaisAtivos: 0, agendamentosMes: 0, receitaMes: 0, deltaUsuarios:0, deltaProfissionais:0, deltaAgendamentos:0, deltaReceita:0 });
+  const [aprovacoes, setAprovacoes] = useState([]);
+  const [atividade] = useState([]);
   const [busca, setBusca] = useState('');
   const [erro, setErro] = useState('');
 
