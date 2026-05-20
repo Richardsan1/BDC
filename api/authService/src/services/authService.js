@@ -8,7 +8,7 @@ const SALT_ROUNDS = parseInt(process.env.BCRYPT_SALT_ROUNDS);
 /**
  * UC01 / UC12 — Registra um novo usuário (cliente, profissional, salão).
  */
-const registrar = async ({ email, senha, tipo }) => {
+const registrar = async ({ email, senha, tipo, nome }) => {
   // Verifica duplicidade de e-mail
   const { rows: existente } = await query(
     'SELECT id FROM authservice.usuarios WHERE email = $1',
@@ -40,6 +40,7 @@ const registrar = async ({ email, senha, tipo }) => {
   await publish(eventoKey, {
     user_id: usuario.id,
     email: usuario.email,
+    nome: nome || usuario.email.split('@')[0], // Usa nome ou parte do email como fallback
     tipo: usuario.tipo,
     status: usuario.status,
   });

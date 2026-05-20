@@ -24,7 +24,7 @@ const obterPerfilPublico = async (id) => {
   `, [id]);
 
   const { rows: servicos } = await query(`
-    SELECT id, nome, descricao, duracao_minutos, preco
+    SELECT id, nome, descricao, duracao_minutos as duracao, preco
     FROM userservice.servicos
     WHERE perfil_id = $1 AND ativo = true
   `, [id]);
@@ -177,9 +177,58 @@ const atualizarStatus = async (id, status) => {
   return result.rows[0];
 };
 
+// Favoritos
+const adicionarFavorito = async (usuarioId, profissionalId) => {
+  try {
+    const result = await query(`
+      INSERT INTO userservice.favoritos (id, usuario_id, profissional_id, criado_em)
+      VALUES ($1, $2, $3, NOW())
+      ON CONFLICT (usuario_id, profissional_id) DO NOTHING
+      RETURNING *
+    `, [uuidv4(), usuarioId, profissionalId]);
+
+    return result.rows[0] || { usuario_id: usuarioId, profissional_id: profissionalId, criado_em: new Date() };
+  } catch (err) {
+    console.error('Erro ao adicionar favorito:', err);
+    throw err;
+  }
+};
+
+const removerFavorito = async (usuarioId, profissionalId) => {
+  const result = await query(`
+    DELETE FROM userservice.favoritos
+    WHERE usuario_id = $1 AND profissional_id = $2
+  `, [usuarioId, profissionalId]);
+
+  return result.rowCount > 0;
+};
+
+const listarFavoritos = async (usuarioId) => {
+  const result = await query(`
+    SELECT p.id, p.nome, p.email, p.bio, p.foto_url, p.cidade, p.avaliacao_media, p.tipo
+    FROM userservice.favoritos f
+    JOIN userservice.perfis p ON f.profissional_id = p.id
+    WHERE f.usuario_id = $1 AND p.ativo = true
+    ORDER BY f.criado_em DESC
+  `, [usuarioId]);
+
+  return result.rows;
+};
+
+const obterServicoPublico = async (id) => {
+  const result = await query(`
+    SELECT id, nome, descricao, duracao_minutos as duracao, preco
+    FROM userservice.servicos
+    WHERE id = $1 AND ativo = true
+  `, [id]);
+  
+  return result.rows[0] || null;
+};
+
 module.exports = {
   listarEspecialidades,
   obterPerfilPublico,
+  obterServicoPublico,
   obterPerfilPorId,
   atualizarPerfil,
   atualizarEspecialidades,
@@ -190,4 +239,7 @@ module.exports = {
   batch,
   listarPendentes,
   atualizarStatus,
+  adicionarFavorito,
+  removerFavorito,
+  listarFavoritos,
 };

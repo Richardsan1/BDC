@@ -77,6 +77,9 @@ export const users = {
   criarServico: (data) => api.post('/users/me/servicos', data, { auth: true }),
   atualizarServico: (id, data) => api.put(`/users/me/servicos/${id}`, data, { auth: true }),
   deletarServico: (id) => api.del(`/users/me/servicos/${id}`, { auth: true }),
+  listarFavoritos: () => api.get('/users/me/favoritos', { auth: true }),
+  adicionarFavorito: (profissionalId) => api.post('/users/me/favoritos', { profissionalId }, { auth: true }),
+  removerFavorito: (profissionalId) => api.del(`/users/me/favoritos/${profissionalId}`, { auth: true }),
 };
 
 export const search = {

@@ -15,7 +15,7 @@ export default function LandingPage() {
     search
       .buscar({ por_pagina: 4, ordenar: 'avaliacao' })
       .then((data) => {
-        const lista = Array.isArray(data) ? data : data?.resultados;
+        const lista = Array.isArray(data) ? data : data?.dados;
         if (lista && lista.length) setDestaques(lista.slice(0, 4));
       })
       .catch(() => setDestaques([]));

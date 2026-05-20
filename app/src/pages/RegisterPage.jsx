@@ -8,6 +8,21 @@ const TIPOS = [
   { id: 'salao', titulo: 'Salão', desc: 'Represento um salão de beleza.' },
 ];
 
+// Função para validar força da senha
+const validarSenha = (senha) => {
+  return {
+    temMaiuscula: /[A-Z]/.test(senha),
+    temMinuscula: /[a-z]/.test(senha),
+    temNumero: /[0-9]/.test(senha),
+    temEspecial: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(senha),
+    temComprimento: senha.length >= 8,
+  };
+};
+
+const validacaoCompleta = (validacao) => {
+  return Object.values(validacao).every(v => v === true);
+};
+
 export default function RegisterPage() {
   const { registrar, login } = useAuth();
   const navigate = useNavigate();
@@ -20,8 +35,21 @@ export default function RegisterPage() {
   const [sucesso, setSucesso] = useState('');
   const [enviando, setEnviando] = useState(false);
 
+  const validacao = validarSenha(senha);
+  const senhaForte = validacaoCompleta(validacao);
+
+  const handleChangeSenha = (e) => {
+    setSenha(e.target.value);
+  };
+
   const onSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!senhaForte) {
+      setErro('A senha deve conter maiúscula, minúscula, número e caractere especial (mínimo 8 caracteres).');
+      return;
+    }
+
     setErro('');
     setSucesso('');
     setEnviando(true);
@@ -98,12 +126,25 @@ export default function RegisterPage() {
           <input
             type="password"
             required
-            minLength={6}
+            minLength={8}
             value={senha}
-            onChange={(e) => setSenha(e.target.value)}
+            onChange={handleChangeSenha}
             className="mt-1 w-full rounded-lg border border-cream-300 bg-white px-3 py-2 text-sm outline-none focus:border-coral-500"
           />
         </label>
+
+        {senha && (
+          <div className="space-y-2 rounded-lg bg-cream-50 p-3">
+            <p className="text-xs font-medium text-ink-700">Requisitos da senha:</p>
+            <div className="space-y-1.5">
+              <RequisitoSenha atendido={validacao.temComprimento} texto="Mínimo 8 caracteres" />
+              <RequisitoSenha atendido={validacao.temMaiuscula} texto="Uma letra maiúscula (A-Z)" />
+              <RequisitoSenha atendido={validacao.temMinuscula} texto="Uma letra minúscula (a-z)" />
+              <RequisitoSenha atendido={validacao.temNumero} texto="Um número (0-9)" />
+              <RequisitoSenha atendido={validacao.temEspecial} texto="Um caractere especial (!@#$%...)" />
+            </div>
+          </div>
+        )}
 
         {erro && (
           <p className="rounded-lg bg-coral-50 px-3 py-2 text-sm text-coral-700">{erro}</p>
@@ -114,7 +155,7 @@ export default function RegisterPage() {
 
         <button
           type="submit"
-          disabled={enviando}
+          disabled={enviando || !senhaForte}
           className="w-full rounded-lg bg-coral-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-coral-600 disabled:bg-coral-200"
         >
           {enviando ? 'Enviando...' : 'Criar conta'}
@@ -127,6 +168,21 @@ export default function RegisterPage() {
           </Link>
         </p>
       </form>
+    </div>
+  );
+}
+
+function RequisitoSenha({ atendido, texto }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        className={`flex h-4 w-4 items-center justify-center rounded-full text-xs font-bold ${
+          atendido ? 'bg-mint-100 text-mint-600' : 'bg-cream-200 text-cream-500'
+        }`}
+      >
+        {atendido ? '✓' : '•'}
+      </span>
+      <span className={`text-xs ${atendido ? 'text-ink-700' : 'text-ink-500'}`}>{texto}</span>
     </div>
   );
 }

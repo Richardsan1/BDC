@@ -53,7 +53,7 @@ export default function BookingPage() {
   }, [id]);
 
   const servico = useMemo(
-    () => profissional.servicos?.find((s) => s.id === servicoSel),
+    () => profissional?.servicos?.find((s) => s.id === servicoSel),
     [profissional, servicoSel]
   );
 
@@ -92,18 +92,9 @@ export default function BookingPage() {
     }
 
     if (passo === 5) {
-      setEnviando(true);
-      try {
-        const intent = await payments.intent(bookingId, servico.preco);
-        if (!intent?.paymentIntentId) throw new Error('Falha ao obter intenção de pagamento');
-        await payments.confirmar(intent.paymentIntentId);
-        navigate('/', { replace: true });
-      } catch {
-        setErro('Erro ao processar pagamento');
-        return;
-      } finally {
-        setEnviando(false);
-      }
+      // Agendamento já foi criado no passo 4
+      // Apenas redireciona para home com sucesso
+      navigate('/', { replace: true });
       return;
     }
     setPasso(passo + 1);
@@ -113,6 +104,25 @@ export default function BookingPage() {
     if (passo === 1) navigate(-1);
     else setPasso(passo - 1);
   };
+
+  if (carregandoProf) {
+    return (
+      <div className="mx-auto max-w-2xl px-6 py-8">
+        <div className="mt-6 rounded-2xl border border-cream-300/60 bg-white p-6 text-center text-ink-500">Carregando...</div>
+      </div>
+    );
+  }
+
+  if (!profissional) {
+    return (
+      <div className="mx-auto max-w-2xl px-6 py-8">
+        <Link to="/buscar" className="text-sm text-ink-500 hover:text-coral-500">
+          ‹ Voltar à busca
+        </Link>
+        <div className="mt-6 rounded-2xl border border-cream-300/60 bg-white p-6 text-center text-ink-500">Profissional não encontrado</div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-8">
@@ -222,25 +232,13 @@ export default function BookingPage() {
         {passo === 5 && (
           <>
             <div className="mb-3 flex items-center gap-2 text-sm font-medium text-ink-900">
-              <span>💳</span> Pagamento
+              <span>💳</span> Confirmação
             </div>
             <p className="text-sm text-ink-700">
-              Para concluir o agendamento de <strong>{servico?.nome}</strong> com{' '}
-              <strong>{profissional.nome}</strong>, finalize o pagamento de{' '}
-              <strong>R$ {servico?.preco}</strong>.
+              Agendamento de <strong>{servico?.nome}</strong> com <strong>{profissional.nome}</strong> confirmado!
             </p>
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              {['Pix', 'Crédito', 'Débito'].map((m) => (
-                <div
-                  key={m}
-                  className="rounded-lg border border-cream-300 bg-cream-50 px-3 py-3 text-center text-sm text-ink-700"
-                >
-                  {m}
-                </div>
-              ))}
-            </div>
-            <p className="mt-4 text-xs text-ink-400">
-              * Pagamento processado de forma segura. Você pode cancelar até 24h antes.
+            <p className="mt-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+              ✓ O pagamento de <strong>R$ {servico?.preco}</strong> será realizado no local no dia {data} às {hora}.
             </p>
           </>
         )}
@@ -260,7 +258,7 @@ export default function BookingPage() {
             onClick={avancar}
             className="rounded-lg bg-coral-500 px-6 py-2 text-sm font-medium text-white hover:bg-coral-600 disabled:cursor-not-allowed disabled:bg-coral-200"
           >
-            {enviando ? 'Processando...' : passo === 5 ? 'Confirmar pagamento' : 'Continuar'}
+            {enviando ? 'Processando...' : passo === 5 ? 'Finalizar agendamento' : 'Continuar'}
           </button>
         </div>
       </div>

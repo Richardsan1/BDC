@@ -9,6 +9,8 @@ export default function ProfessionalDetailPage() {
   const { id } = useParams();
   const [profissional, setProfissional] = useState(null);
   const [carregando, setCarregando] = useState(true);
+  const [isFavorito, setIsFavorito] = useState(false);
+  const [salvandoFavorito, setSalvandoFavorito] = useState(false);
 
   useEffect(() => {
     setCarregando(true);
@@ -19,7 +21,49 @@ export default function ProfessionalDetailPage() {
       .finally(() => setCarregando(false));
   }, [id]);
 
+  const handleSalvarFavorito = async () => {
+    if (!profissional) return;
+    setSalvandoFavorito(true);
+    try {
+      if (isFavorito) {
+        await users.removerFavorito(profissional.id);
+        setIsFavorito(false);
+      } else {
+        await users.adicionarFavorito(profissional.id);
+        setIsFavorito(true);
+      }
+    } catch (err) {
+      console.error('Erro ao salvar/remover favorito:', err);
+    } finally {
+      setSalvandoFavorito(false);
+    }
+  };
+
   const p = profissional;
+
+  // Mostrar estado de carregamento enquanto busca o perfil
+  if (carregando) {
+    return (
+      <div className="mx-auto max-w-3xl px-6 py-6">
+        <Link to="/buscar" className="text-sm text-ink-500 hover:text-coral-500">
+          ‹ Voltar aos resultados
+        </Link>
+        <div className="mt-6 rounded-2xl border border-cream-300/60 bg-white p-6 text-center text-ink-500">Carregando perfil...</div>
+      </div>
+    );
+  }
+
+  // Caso não exista profissional (erro na busca), mostrar mensagem amigável
+  if (!profissional) {
+    return (
+      <div className="mx-auto max-w-3xl px-6 py-6">
+        <Link to="/buscar" className="text-sm text-ink-500 hover:text-coral-500">
+          ‹ Voltar aos resultados
+        </Link>
+        <div className="mt-6 rounded-2xl border border-cream-300/60 bg-white p-6 text-center text-ink-500">Profissional não encontrado ou indisponível.</div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-6">
@@ -29,7 +73,7 @@ export default function ProfessionalDetailPage() {
 
       <div className="mt-4 overflow-hidden rounded-2xl bg-cream-200">
         <div className="flex h-64 items-center justify-center">
-          <span className="font-display text-7xl text-ink-300">{p.iniciais}</span>
+          <span className="font-display text-7xl text-ink-300">{profissional.iniciais}</span>
         </div>
       </div>
 
@@ -37,30 +81,34 @@ export default function ProfessionalDetailPage() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="font-display text-3xl text-ink-900">{p.nome}</h1>
-              {p.inclusivo && (
+              <h1 className="font-display text-3xl text-ink-900">{profissional.nome}</h1>
+              {profissional.inclusivo && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-cyan-50 px-2.5 py-1 text-xs text-cyan-700">
                   💙 Atendimento Inclusivo
                 </span>
               )}
             </div>
-            <p className="mt-1 text-sm text-ink-500">{p.subtitulo}</p>
+            <p className="mt-1 text-sm text-ink-500">{profissional.subtitulo}</p>
             <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-ink-700">
               <span>
-                <span className="text-amber-500">★</span> {p.avaliacao}{' '}
-                <span className="text-ink-400">({p.totalAvaliacoes} avaliações)</span>
+                <span className="text-amber-500">★</span> {profissional.avaliacao}{' '}
+                <span className="text-ink-400">({profissional.totalAvaliacoes} avaliações)</span>
               </span>
-              <span>📍 {p.cidade}</span>
+              <span>📍 {profissional.cidade}</span>
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
-              {(p.tags || []).map((t) => (
+              {(profissional.tags || []).map((t) => (
                 <Tag key={t}>{t}</Tag>
               ))}
             </div>
           </div>
           <div className="flex gap-2">
-            <button className="inline-flex items-center gap-1 rounded-lg border border-cream-300 px-3 py-1.5 text-sm text-ink-700 hover:border-coral-300">
-              ♡ Salvar
+            <button
+              onClick={handleSalvarFavorito}
+              disabled={salvandoFavorito}
+              className="inline-flex items-center gap-1 rounded-lg border border-cream-300 px-3 py-1.5 text-sm text-ink-700 hover:border-coral-300 disabled:opacity-50"
+            >
+              {isFavorito ? '❤️' : '♡'} {isFavorito ? 'Salvo' : 'Salvar'}
             </button>
             <button className="inline-flex items-center gap-1 rounded-lg border border-cream-300 px-3 py-1.5 text-sm text-ink-700 hover:border-coral-300">
               ⇪ Compartilhar
@@ -68,13 +116,13 @@ export default function ProfessionalDetailPage() {
           </div>
         </div>
 
-        {p.descricao && (
-          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-ink-700">{p.descricao}</p>
+        {profissional.descricao && (
+          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-ink-700">{profissional.descricao}</p>
         )}
 
-        {p.features && (
+        {profissional.features && (
           <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs text-mint-600">
-            {p.features.map((f) => (
+            {profissional.features.map((f) => (
               <span key={f}>✓ {f}</span>
             ))}
           </div>

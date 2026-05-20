@@ -7,6 +7,8 @@ const pool = new Pool({
   user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD,
   max: 20,
+  ssl: false,
+  sslmode: 'disable',
 });
 
 pool.on('error', (err) => {

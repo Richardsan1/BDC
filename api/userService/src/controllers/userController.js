@@ -22,6 +22,19 @@ const obterPerfilPublico = async (req, res, next) => {
   }
 };
 
+const obterServicoPublico = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const servico = await userService.obterServicoPublico(id);
+    if (!servico) {
+      return res.status(404).json({ erro: 'Serviço não encontrado' });
+    }
+    res.json(servico);
+  } catch (err) {
+    next(err);
+  }
+};
+
 const obterMeuPerfil = async (req, res, next) => {
   try {
     const perfil = await userService.obterPerfilPorId(req.usuario.id);
@@ -132,9 +145,40 @@ const atualizarStatusInterno = async (req, res, next) => {
   }
 };
 
+// Favoritos
+const adicionarFavorito = async (req, res, next) => {
+  try {
+    const { profissionalId } = req.body;
+    const favorito = await userService.adicionarFavorito(req.usuario.id, profissionalId);
+    res.status(201).json(favorito);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const removerFavorito = async (req, res, next) => {
+  try {
+    const { profissionalId } = req.params;
+    await userService.removerFavorito(req.usuario.id, profissionalId);
+    res.json({ mensagem: 'Favorito removido' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const listarFavoritos = async (req, res, next) => {
+  try {
+    const favoritos = await userService.listarFavoritos(req.usuario.id);
+    res.json(favoritos);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   listarEspecialidades,
   obterPerfilPublico,
+  obterServicoPublico,
   obterMeuPerfil,
   atualizarPerfil,
   uploadFoto,
@@ -146,4 +190,7 @@ module.exports = {
   batch,
   listarPendentes,
   atualizarStatusInterno,
+  adicionarFavorito,
+  removerFavorito,
+  listarFavoritos,
 };

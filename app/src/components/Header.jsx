@@ -25,6 +25,11 @@ export default function Header({ admin = false }) {
               <NavLink to="/sobre" className="hover:text-coral-500">
                 Sobre
               </NavLink>
+              {usuario && (
+                <NavLink to="/meus-agendamentos" className="hover:text-coral-500">
+                  📅 Meus Agendamentos
+                </NavLink>
+              )}
             </nav>
           )}
         </div>
@@ -48,15 +53,22 @@ export default function Header({ admin = false }) {
               <span className="hidden text-sm text-ink-700 sm:inline">
                 {usuario.tipo === 'admin' ? 'Admin' : `Olá, ${usuario.nome || usuario.email}`}
               </span>
-              <button
-                onClick={handleSair}
-                className="text-sm text-ink-500 hover:text-coral-500"
-                title="Sair"
+              <Link
+                to="/meu-perfil"
+                title="Meu Perfil"
+                className="rounded-lg hover:bg-cream-200 transition-colors"
               >
                 <Avatar
                   iniciais={(usuario.nome || usuario.email || 'U').slice(0, 2).toUpperCase()}
                   size="sm"
                 />
+              </Link>
+              <button
+                onClick={handleSair}
+                className="text-xs text-ink-500 hover:text-coral-500 ml-2"
+                title="Sair"
+              >
+                Sair
               </button>
             </div>
           )}

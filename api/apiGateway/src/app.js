@@ -30,6 +30,9 @@ app.get('/health', (req, res) => res.json({ status: 'ok', service: 'apiGateway' 
 app.use('/auth', proxyRoutes.auth);
 app.use('/search', proxyRoutes.search);
 app.use('/users/especialidades', proxyRoutes.especialidades);
+// Permitir acesso público ao perfil público do profissional
+// (ex.: GET /users/:id/perfil)
+app.use('/users/:id/perfil', proxyRoutes.users);
 
 // Rotas autenticadas
 app.use('/users', autenticar, proxyRoutes.users);

@@ -2,11 +2,12 @@ const searchService = require('../services/searchService');
 
 const buscar = async (req, res, next) => {
   try {
-    const { termo, especialidades, inclusivo, cidade, latitude, longitude, raio_km, avaliacao_min, preco_maximo, tipo, pagina = 1, por_pagina = 20, ordenar = 'relevancia' } = req.query;
+    const { termo, especialista, especialidades, inclusivo, cidade, latitude, longitude, raio_km, avaliacao_min, preco_maximo, tipo, pagina = 1, por_pagina = 20, ordenar = 'relevancia' } = req.query;
 
     const resultados = await searchService.buscar({
       termo,
-      especialidades: especialidades ? especialidades.split(',') : [],
+      especialista,
+      especialidades: especialidades ? especialidades.split(',').map(e => e.trim()).filter(Boolean) : [],
       inclusivo: inclusivo === 'true',
       cidade,
       latitude: latitude ? parseFloat(latitude) : null,

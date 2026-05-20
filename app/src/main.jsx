@@ -14,6 +14,8 @@ import BookingPage from './pages/BookingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ProfessionalDashboard from './pages/ProfessionalDashboard';
+import UserDashboard from './pages/UserDashboard';
+import MyAppointmentsPage from './pages/MyAppointmentsPage';
 import AdminDashboard from './pages/AdminDashboard';
 import AboutPage from './pages/AboutPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -31,6 +33,22 @@ createRoot(document.getElementById('root')).render(
             <Route path="/profissional/:id/agendar" element={<BookingPage />} />
             <Route path="/entrar" element={<LoginPage />} />
             <Route path="/cadastrar" element={<RegisterPage />} />
+            <Route
+              path="/meus-agendamentos"
+              element={
+                <ProtectedRoute>
+                  <MyAppointmentsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/meu-perfil"
+              element={
+                <ProtectedRoute>
+                  <UserDashboard />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/painel"
               element={

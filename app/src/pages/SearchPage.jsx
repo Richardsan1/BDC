@@ -47,7 +47,7 @@ export default function SearchPage() {
     search
       .buscar(params)
       .then((data) => {
-        const lista = Array.isArray(data) ? data : data?.resultados;
+        const lista = Array.isArray(data) ? data : data?.dados;
         if (lista) setResultados(lista);
       })
       .catch(() => setResultados([]))
@@ -66,9 +66,20 @@ export default function SearchPage() {
   };
 
   const toggleEsp = (id) => {
-    setEspecialidadesSel((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
+    setEspecialidadesSel((prev) => {
+      const newSel = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      // Aplicar filtros automaticamente após mudar especialidade
+      setTimeout(() => {
+        const next = new URLSearchParams();
+        if (termo) next.set('termo', termo);
+        if (cidade) next.set('cidade', cidade);
+        if (newSel.length) next.set('especialidades', newSel.join(','));
+        if (avaliacaoMin) next.set('avaliacao_min', String(avaliacaoMin));
+        if (inclusivo) next.set('inclusivo', 'true');
+        setSearchParams(next);
+      }, 0);
+      return newSel;
+    });
   };
 
   return (
@@ -103,15 +114,31 @@ export default function SearchPage() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[260px_1fr]">
         <aside className="space-y-5 rounded-2xl border border-cream-300/60 bg-white p-5">
-          <div className="flex items-center gap-2 text-sm font-medium text-ink-900">
-            <span>⚙</span> Filtros
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-medium text-ink-900">
+              <span>⚙</span> Filtros
+            </div>
+            {(especialidadesSel.length > 0 || avaliacaoMin > 0 || inclusivo) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setEspecialidadesSel([]);
+                  setAvaliacaoMin(0);
+                  setInclusivo(false);
+                  setSearchParams(new URLSearchParams());
+                }}
+                className="text-xs text-coral-500 hover:text-coral-600 font-medium"
+              >
+                Limpar filtros
+              </button>
+            )}
           </div>
 
           <div>
             <p className="mb-2 text-xs uppercase tracking-wide text-ink-400">Especialidade</p>
             <div className="flex flex-wrap gap-2">
               {especialidades.map((e) => {
-                const id = e.id || e.nome;
+                const id = e.nome; // Usar nome como ID, não o UUID
                 const ativo = especialidadesSel.includes(id);
                 return (
                   <button
@@ -138,7 +165,20 @@ export default function SearchPage() {
                 <button
                   key={v}
                   type="button"
-                  onClick={() => setAvaliacaoMin(avaliacaoMin === v ? 0 : v)}
+                  onClick={() => {
+                    const novaAvaliacao = avaliacaoMin === v ? 0 : v;
+                    setAvaliacaoMin(novaAvaliacao);
+                    // Aplicar filtro automaticamente
+                    setTimeout(() => {
+                      const next = new URLSearchParams();
+                      if (termo) next.set('termo', termo);
+                      if (cidade) next.set('cidade', cidade);
+                      if (especialidadesSel.length) next.set('especialidades', especialidadesSel.join(','));
+                      if (novaAvaliacao) next.set('avaliacao_min', String(novaAvaliacao));
+                      if (inclusivo) next.set('inclusivo', 'true');
+                      setSearchParams(next);
+                    }, 0);
+                  }}
                   className={`rounded-full border px-3 py-1 text-xs ${
                     avaliacaoMin === v
                       ? 'border-coral-500 bg-coral-50 text-coral-700'
@@ -155,21 +195,26 @@ export default function SearchPage() {
             <input
               type="checkbox"
               checked={inclusivo}
-              onChange={(e) => setInclusivo(e.target.checked)}
+              onChange={(e) => {
+                const novoInclusivo = e.target.checked;
+                setInclusivo(novoInclusivo);
+                // Aplicar filtro automaticamente
+                setTimeout(() => {
+                  const next = new URLSearchParams();
+                  if (termo) next.set('termo', termo);
+                  if (cidade) next.set('cidade', cidade);
+                  if (especialidadesSel.length) next.set('especialidades', especialidadesSel.join(','));
+                  if (avaliacaoMin) next.set('avaliacao_min', String(avaliacaoMin));
+                  if (novoInclusivo) next.set('inclusivo', 'true');
+                  setSearchParams(next);
+                }, 0);
+              }}
               className="h-4 w-4 rounded border-cream-300 text-coral-500 focus:ring-coral-500"
             />
             <span className="inline-flex items-center gap-1 rounded-full bg-cyan-50 px-2 py-0.5 text-xs text-cyan-700">
               💙 Atendimento Inclusivo
             </span>
           </label>
-
-          <button
-            type="button"
-            onClick={aplicarBusca}
-            className="w-full rounded-lg border border-cream-300 px-3 py-2 text-sm text-ink-700 hover:border-coral-300"
-          >
-            Aplicar filtros
-          </button>
         </aside>
 
         <section>
