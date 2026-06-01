@@ -1,0 +1,21 @@
+{
+  "name": "bdc-test-suite",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "test": "node --test",
+    "test:apiGateway": "node --test ./apiGateway/health.test.js",
+    "test:authService": "node --test ./authService/health.test.js",
+    "test:userService": "node --test ./userService/health.test.js",
+    "test:searchService": "node --test ./searchService/health.test.js",
+    "test:bookingService": "node --test ./bookingService/health.test.js",
+    "test:paymentService": "node --test ./paymentService/health.test.js",
+    "test:adminService": "node --test ./adminService/health.test.js",
+    "test:notificationService": "node --test ./notificationService/resend.test.js",
+    "test:frontend": "node --test ./frontend/routes.test.js",
+    "test:all": "npm run test:apiGateway && npm run test:authService && npm run test:userService && npm run test:searchService && npm run test:bookingService && npm run test:paymentService && npm run test:adminService && npm run test:notificationService && npm run test:frontend"
+  },
+  "dependencies": {
+    "supertest": "^7.1.4"
+  }
+}
